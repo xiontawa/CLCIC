@@ -1,21 +1,28 @@
 import tkinter as tk
 import time
 from pynput import mouse, keyboard
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 IDLE_TIME = 15 * 60
+MAX_VOLUME = 0.2  # 20% volume
 last_activity = time.time()
 
 def on_move(x, y):
     global last_activity
     last_activity = time.time()
+    check_volume()
 
 def on_click(x, y, button, pressed):
     global last_activity
     last_activity = time.time()
+    check_volume()
 
 def on_press(key):
     global last_activity
     last_activity = time.time()
+    check_volume()
 
 def check_idle():
     global last_activity
@@ -24,11 +31,18 @@ def check_idle():
         return True
     return False
 
+def check_volume():
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    current_volume = volume.GetMasterVolumeLevelScalar()
+    if current_volume > MAX_VOLUME:
+        volume.SetMasterVolumeLevelScalar(MAX_VOLUME, None)
+
 def show_popup():
     popup = tk.Tk()
     popup.title("Check-In Required")
 
-    # Make the window full screen and on top
     popup.attributes('-fullscreen', True)
     popup.attributes('-topmost', True)
 
@@ -43,8 +57,7 @@ def show_popup():
     button = tk.Button(popup, text="I've Checked In", command=close_popup, font=("Arial", 16))
     button.pack(pady=20)
 
-    # Disable window controls (close, minimize, etc.)
-    popup.protocol("WM_DELETE_WINDOW", lambda: None) #Disables the close button.
+    popup.protocol("WM_DELETE_WINDOW", lambda: None)
 
     popup.mainloop()
 
@@ -59,6 +72,7 @@ try:
     while True:
         if check_idle():
             show_popup()
+        check_volume() # check volume every second as well.
         time.sleep(1)
 except KeyboardInterrupt:
     mouse_listener.stop()
