@@ -8,6 +8,7 @@ CLCIC (Cenntenial Library Check In Checker) is simple program that adds a pop up
 ### Upcoming Features
 - Printer Dialog Popup?
 - Form That Fills Stats Sheet?
+- Mac Version.
 
 ## Releases
 
