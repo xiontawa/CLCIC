@@ -1,8 +1,14 @@
 # CLCIC
 CLCIC (Cenntenial Library Check In Checker) is simple program that adds a pop up window that reminds patrons to check-in at the front desk before using a computer. More features coming soon.
 
-## To-Do
+### To-Do
 - Set Time Correctly.
+
+### Upcoming Features?
+- Printer Dialog Popup?
+- Form That Fills Stats Sheet?
+
+## Releases
 
 ### v0.2 (03/31/2025)
 - Fixed tons of bugs.
