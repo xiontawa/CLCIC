@@ -1,15 +1,19 @@
 import tkinter as tk
 import time
 import sys
+import os
 import threading
 from pynput import mouse, keyboard
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import pystray
+from PIL import Image, ImageDraw, ImageFont
 
 # Constants
 IDLE_TIME = 15 * 60
 last_activity = time.time()
 exit_flag = False
 HEADPHONE_KEYWORDS = ["headphone", "headset", "earbuds", "airpods"]
+tray_icon = None
 
 # Initialize volume control interface
 devices = AudioUtilities.GetSpeakers()
@@ -83,13 +87,35 @@ def show_popup():
     popup.mainloop()
 
 # Exit application gracefully
-def exit_program():
+def exit_program(icon=None, item=None):
     global exit_flag
-    mouse_listener.stop()
-    keyboard_listener.stop()
-    exit_flag = True
-    print("Application exiting...")
-    sys.exit()
+    try:
+        mouse_listener.stop()
+        keyboard_listener.stop()
+        if tray_icon:
+            tray_icon.stop()
+        exit_flag = True
+        print("Application exiting...")
+    except Exception as e:
+        print(f"Error while exiting: {e}")
+    finally:
+        if icon:
+            icon.stop()  # Properly stop the tray icon
+        os._exit(0)  # Kill the process immediately without causing errors
+
+
+# Create the system tray icon
+def create_tray_icon():
+    global tray_icon
+    # Create a 16x16 empty icon
+    from PIL import Image
+    image = Image.new("RGB", (16, 16), color=(0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.text((2, 2), "CCC", fill=(255, 255, 255))  # Positioned slightly for centering
+    
+    menu = (pystray.MenuItem("Exit", exit_program),)
+    tray_icon = pystray.Icon("MyApp", image, "CLCIC", menu)
+    tray_icon.run()
 
 # Hotkey listener (Ctrl + Alt + Q)
 def hotkey_listener():
@@ -107,6 +133,10 @@ keyboard_listener.start()
 hotkey_thread = threading.Thread(target=hotkey_listener, daemon=True)
 hotkey_thread.start()
 
+# Run tray icon in a background thread
+tray_thread = threading.Thread(target=create_tray_icon, daemon=True)
+tray_thread.start()
+
 # Main loop
 try:
     while not exit_flag:
@@ -117,7 +147,7 @@ try:
         if not headphones_plugged_in():
             current_volume = volume.GetMasterVolumeLevelScalar() * 100
             if current_volume > 30:
-                volume.SetMasterVolumeLevelScalar(0.2, None)  # Set volume to 20%
+                volume.SetMasterVolumeLevelScalar(0.3, None)
 
         time.sleep(1)
 finally:
