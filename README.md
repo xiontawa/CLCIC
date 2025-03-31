@@ -5,6 +5,7 @@ CLCIC (Cenntenial Library Check In Checker) is simple program that adds a pop up
 * Set Time Correctly.
 * Set Volume Correctly.
 * Test On Public PCs.
+        * Need a way to close the app.
 
 ### Alpha 3
 * It LIVES! First working build.
