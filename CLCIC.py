@@ -6,7 +6,7 @@ from pynput import mouse, keyboard
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 # Constants
-IDLE_TIME = 5  # 5 seconds of inactivity triggers the popup
+IDLE_TIME = 5
 last_activity = time.time()
 exit_flag = False
 HEADPHONE_KEYWORDS = ["headphone", "headset", "earbuds", "airpods"]
@@ -116,7 +116,7 @@ try:
         # Limit volume only if headphones are NOT plugged in
         if not headphones_plugged_in():
             current_volume = volume.GetMasterVolumeLevelScalar() * 100
-            if current_volume > 20:
+            if current_volume > 30:
                 volume.SetMasterVolumeLevelScalar(0.2, None)  # Set volume to 20%
 
         time.sleep(1)
