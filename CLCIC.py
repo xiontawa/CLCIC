@@ -6,7 +6,7 @@ from pynput import mouse, keyboard
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 # Constants
-IDLE_TIME = 5
+IDLE_TIME = 15 * 60
 last_activity = time.time()
 exit_flag = False
 HEADPHONE_KEYWORDS = ["headphone", "headset", "earbuds", "airpods"]
