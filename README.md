@@ -3,7 +3,7 @@ CLCIC (Cenntenial Library Check In Checker) is simple program that adds a pop up
 
 ### To-Do
 - Set Time Correctly.
-- Re-add the Tray Icon?
+- Reimplement the Tray Icon?
 
 ### Upcoming Features
 - Printer Dialog Popup?
@@ -13,6 +13,7 @@ CLCIC (Cenntenial Library Check In Checker) is simple program that adds a pop up
 
 ### v0.2 <sup>(03/31/2025)</sup>
 - Fixed tons of bugs.
+- Removed System Tray Icon.
 - Polished and fine tuned code.
 
 ### v0.1 <sup>(03/30/2025)</sup>
