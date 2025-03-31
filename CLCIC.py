@@ -3,67 +3,71 @@ import time
 import sys
 import threading
 from pynput import mouse, keyboard
-import pystray
-from PIL import Image, ImageDraw
-from time import sleep
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
-# Constants and initializations
-IDLE_TIME = 5 * 1  # 5 seconds of inactivity triggers the popup
+# Constants
+IDLE_TIME = 5  # 5 seconds of inactivity triggers the popup
 last_activity = time.time()
-mouse_listener = None
-keyboard_listener = None
-tray_icon = None
 exit_flag = False
+HEADPHONE_KEYWORDS = ["headphone", "headset", "earbuds", "airpods"]
 
-# Initialize the volume control interface
+# Initialize volume control interface
 devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(IAudioEndpointVolume._iid_, 1, None)
 volume = interface.QueryInterface(IAudioEndpointVolume)
 
-# Mouse and Keyboard listeners for idle detection
-def on_move(x, y):
+# Update activity timestamp
+def update_activity():
     global last_activity
     last_activity = time.time()
+
+# Mouse and Keyboard listeners
+def on_move(x, y):
+    update_activity()
 
 def on_click(x, y, button, pressed):
-    global last_activity
-    last_activity = time.time()
+    update_activity()
 
 def on_press(key):
-    global last_activity
-    last_activity = time.time()
+    update_activity()
 
+# Check if the system is idle
 def check_idle():
-    global last_activity
-    current_time = time.time()
-    if current_time - last_activity > IDLE_TIME:
-        return True
+    return time.time() - last_activity > IDLE_TIME
+
+# Check if headphones are plugged in
+def headphones_plugged_in():
+    sessions = AudioUtilities.GetAllSessions()
+    for session in sessions:
+        if session.Process and session.Process.name():
+            device_name = session.Process.name().lower()
+            if any(keyword in device_name for keyword in HEADPHONE_KEYWORDS):
+                return True
     return False
 
-# Popup dialog for check-in
+# Show the popup
 def show_popup():
     popup = tk.Tk()
     popup.title("Check-In Required")
 
-    screen_width = popup.winfo_screenwidth()
-    screen_height = popup.winfo_screenheight()
-
-    window_width = 600
-    window_height = 300
-    x = (screen_width / 2) - (window_width / 2)
-    y = (screen_height / 2) - (window_height / 2)
-
-    popup.geometry(f"{window_width}x{window_height}+{int(x)}+{int(y)}")
+    # Center window
+    window_width, window_height = 600, 300
+    x = (popup.winfo_screenwidth() - window_width) // 2
+    y = (popup.winfo_screenheight() - window_height) // 2
+    popup.geometry(f"{window_width}x{window_height}+{x}+{y}")
     popup.attributes('-topmost', True)
 
-    label = tk.Label(popup, text="Please check in at the front desk before\nusing this computer. Thank you.", font=("Arial", 20))
+    label = tk.Label(
+        popup,
+        text="Please check in at the front desk before\nusing this computer. Thank you.",
+        font=("Arial", 20)
+    )
     label.pack(pady=50)
 
+    # Close popup and reset activity
     def close_popup():
         popup.destroy()
-        global last_activity
-        last_activity = time.time()
+        update_activity()
 
     button = tk.Button(
         popup,
@@ -78,34 +82,19 @@ def show_popup():
     popup.protocol("WM_DELETE_WINDOW", lambda: None)
     popup.mainloop()
 
-# Exit program functionality
-def exit_program(icon, item):
-    global mouse_listener, keyboard_listener, tray_icon, exit_flag
-    if mouse_listener:
-        mouse_listener.stop()
-        print("Mouse listener stopped.")
-    if keyboard_listener:
-        keyboard_listener.stop()
-        print("Keyboard listener stopped.")
-    if tray_icon:
-        tray_icon.stop()
-        print("Tray icon stopped.")
+# Exit application gracefully
+def exit_program():
+    global exit_flag
+    mouse_listener.stop()
+    keyboard_listener.stop()
     exit_flag = True
-    print("Exit flag set.")
+    print("Application exiting...")
+    sys.exit()
 
-# Tray icon creation
-def create_tray_icon():
-    global tray_icon
-    try:
-        image = Image.open("icon.png")
-    except FileNotFoundError:
-        image = Image.new('RGB', (16, 16), color=(128, 128, 128))
-        draw = ImageDraw.Draw(image)
-        draw.text((0, 0), 'App', fill='black')
-
-    menu = (pystray.MenuItem('Exit', exit_program),)
-    tray_icon = pystray.Icon("name", image, "My Application", menu)
-    tray_icon.run()
+# Hotkey listener (Ctrl + Alt + Q)
+def hotkey_listener():
+    with keyboard.GlobalHotKeys({'<ctrl>+<alt>+q': exit_program}) as h:
+        h.join()
 
 # Start listeners
 mouse_listener = mouse.Listener(on_move=on_move, on_click=on_click)
@@ -114,24 +103,22 @@ keyboard_listener = keyboard.Listener(on_press=on_press)
 mouse_listener.start()
 keyboard_listener.start()
 
-# Start the tray icon thread
-tray_thread = threading.Thread(target=create_tray_icon)
-tray_thread.start()
+# Run hotkey listener in background
+hotkey_thread = threading.Thread(target=hotkey_listener, daemon=True)
+hotkey_thread.start()
 
 # Main loop
 try:
     while not exit_flag:
-        # Check for idle time and show popup if needed
         if check_idle():
             show_popup()
 
-        # Volume control logic (ensures volume doesn't go above 20%)
-        current_volume = volume.GetMasterVolumeLevelScalar() * 100  # Get current volume as percentage
-        if current_volume > 20:
-            volume.SetMasterVolumeLevelScalar(0.2, None)  # Set volume to 20%
+        # Limit volume only if headphones are NOT plugged in
+        if not headphones_plugged_in():
+            current_volume = volume.GetMasterVolumeLevelScalar() * 100
+            if current_volume > 20:
+                volume.SetMasterVolumeLevelScalar(0.2, None)  # Set volume to 20%
 
-        time.sleep(1)  # Sleep for 1 second to avoid high CPU usage
-except KeyboardInterrupt:
-    exit_program(None, None)
-
-sys.exit()
+        time.sleep(1)
+finally:
+    exit_program()
