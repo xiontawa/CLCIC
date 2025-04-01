@@ -9,7 +9,7 @@ import pystray
 from PIL import Image, ImageDraw, ImageFont
 
 # Constants
-IDLE_TIME = 15 * 60
+IDLE_TIME = 5
 last_activity = time.time()
 exit_flag = False
 HEADPHONE_KEYWORDS = ["headphone", "headset", "earbuds", "airpods"]
@@ -138,11 +138,18 @@ tray_thread = threading.Thread(target=create_tray_icon, daemon=True)
 tray_thread.start()
 
 # Main loop
+was_idle = False  # Track if the system was idle
+
 try:
     while not exit_flag:
         if check_idle():
+            was_idle = True  # System is idle
+        
+        elif was_idle:
+            # User has resumed activity after being idle
             show_popup()
-
+            was_idle = False  # Reset flag after showing the popup
+        
         # Limit volume only if headphones are NOT plugged in
         if not headphones_plugged_in():
             current_volume = volume.GetMasterVolumeLevelScalar() * 100
