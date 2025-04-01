@@ -9,7 +9,7 @@ import pystray
 from PIL import Image, ImageDraw, ImageFont
 
 # Constants
-IDLE_TIME = 5
+IDLE_TIME = 15 * 60
 last_activity = time.time()
 exit_flag = False
 HEADPHONE_KEYWORDS = ["headphone", "headset", "earbuds", "airpods"]
