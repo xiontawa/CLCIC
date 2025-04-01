@@ -5,12 +5,14 @@ CLCIC (Cenntenial Library Check In Checker) is simple program that adds a pop up
 - Nothing...for now...
 
 ### Upcoming Features
-- Popup Only Shows On Idle Break?
 - Printer Dialog Popup?
 - Form That Fills Stats Sheet?
 - Mac Version.
 
 ## Releases
+
+### v1.1.0 <sup>(04/01/2025)</sup>
+- The Popup Now Only Shows when Idle Status is Broken.
 
 ### v1.0.0 <sup>(03/31/2025)</sup>
 - Everything works!!!
